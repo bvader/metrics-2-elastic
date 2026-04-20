@@ -1,0 +1,64 @@
+# prometheus.yml — Prometheus with remote_write to Elasticsearch and/or Grafana Cloud
+# Replace all <PLACEHOLDER> values before use.
+# Both remote_write targets can be active simultaneously — enable one or both.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: "self-managed"
+    env: "production"
+
+# ---------------------------------------------------------------------------
+# Remote Write — Elasticsearch (ECH or Serverless)
+# ---------------------------------------------------------------------------
+remote_write:
+  - url: "https://<YOUR_ES_ENDPOINT>/_prometheus/api/v1/write"
+    # Elastic Cloud Hosted:  https://<cluster-id>.es.<region>.aws.elastic-cloud.com/_prometheus/api/v1/write
+    # Elastic Serverless:    https://<project-id>.es.<region>.aws.elastic.co/_prometheus/api/v1/write
+    name: elasticsearch
+    authorization:
+      type: ApiKey
+      credentials: "<YOUR_BASE64_API_KEY>"
+    queue_config:
+      capacity: 10000
+      max_shards: 50
+      max_samples_per_send: 5000
+      batch_send_deadline: 5s
+
+# ---------------------------------------------------------------------------
+# Remote Write — Grafana Cloud Metrics (optional, can run alongside ES above)
+# ---------------------------------------------------------------------------
+# Uncomment to also ship metrics to Grafana Cloud.
+#
+#  - url: "https://<YOUR_GRAFANA_CLOUD_PROM_ENDPOINT>/api/prom/push"
+#    # Find your endpoint: Grafana Cloud Portal → your stack → Prometheus → Remote Write endpoint
+#    name: grafana-cloud
+#    basic_auth:
+#      username: "<YOUR_GRAFANA_CLOUD_INSTANCE_ID>"
+#      # Generate a token: Grafana Cloud Portal → Access Policies → create with metrics:write scope
+#      password: "<YOUR_GRAFANA_CLOUD_API_TOKEN>"
+#    queue_config:
+#      capacity: 10000
+#      max_shards: 50
+#      max_samples_per_send: 5000
+#      batch_send_deadline: 5s
+
+# ---------------------------------------------------------------------------
+# Scrape Configs
+# ---------------------------------------------------------------------------
+scrape_configs:
+
+  # Prometheus self-monitoring
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # Node Exporter — host-level OS metrics (CPU, memory, disk, network)
+  # Install: https://github.com/prometheus/node_exporter
+  - job_name: "node"
+    static_configs:
+      - targets:
+          - "localhost:9100"
+          # - "host2.example.com:9100"
+          # - "host3.example.com:9100"
