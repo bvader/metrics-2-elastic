@@ -224,27 +224,6 @@ If the metrics are not flowing, got to the Connections → Fleet Management → 
 
 ---
 
-### Installing Grafana Alloy
-
-**macOS**
-```bash
-brew install grafana/grafana/alloy
-```
-
-**Linux (Debian/Ubuntu)**
-```bash
-sudo apt-get install alloy
-```
-
-**Linux (RPM)**
-```bash
-sudo yum install alloy
-```
-
-Full install docs: [grafana.com/docs/alloy/latest/get-started/install/](https://grafana.com/docs/alloy/latest/get-started/install/)
-
----
-
 ## Grafana 2: Prometheus + Grafana → Elasticsearch
 
 **Config:** [`grafana/prometheus-grafana/prometheus.yml`](grafana/prometheus-grafana/prometheus.yml)
@@ -392,106 +371,6 @@ TS metrics-generic.prometheus-default
 #### 4. Configure Grafana to Visualise Elasticsearch Metrics
 
 > **TODO:** Add steps for configuring Elasticsearch as a Grafana data source and building a dashboard from the `metrics-generic.prometheus-default` data stream.
-
----
-
-### Full Local Test: Node Exporter + Prometheus → Elasticsearch
-
-End-to-end walkthrough to get metrics flowing from your local machine to Elasticsearch in under 10 minutes.
-
-#### Step 1 — Download and Run Node Exporter
-
-Node Exporter exposes host-level OS metrics (CPU, memory, disk, network) on port `9100`.
-
-**macOS**
-```bash
-# Download (Apple Silicon — change darwin-arm64 to darwin-amd64 for Intel)
-curl -LO https://github.com/prometheus/node_exporter/releases/latest/download/node_exporter-$(curl -s https://api.github.com/repos/prometheus/node_exporter/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)-darwin-arm64.tar.gz
-tar xzf node_exporter-*.tar.gz
-cd node_exporter-*/
-./node_exporter
-```
-
-**Linux**
-```bash
-curl -LO https://github.com/prometheus/node_exporter/releases/latest/download/node_exporter-$(curl -s https://api.github.com/repos/prometheus/node_exporter/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)-linux-amd64.tar.gz
-tar xzf node_exporter-*.tar.gz
-cd node_exporter-*/
-./node_exporter
-```
-
-Verify: `curl -s http://localhost:9100/metrics | head -20`
-
-#### Step 2 — Download and Run Prometheus
-
-**macOS**
-```bash
-curl -LO https://github.com/prometheus/prometheus/releases/latest/download/prometheus-$(curl -s https://api.github.com/repos/prometheus/prometheus/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)-darwin-arm64.tar.gz
-tar xzf prometheus-*.tar.gz
-cd prometheus-*/
-```
-
-**Linux**
-```bash
-curl -LO https://github.com/prometheus/prometheus/releases/latest/download/prometheus-$(curl -s https://api.github.com/repos/prometheus/prometheus/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)-linux-amd64.tar.gz
-tar xzf prometheus-*.tar.gz
-cd prometheus-*/
-```
-
-Copy [`grafana/prometheus-grafana/prometheus.yml`](grafana/prometheus-grafana/prometheus.yml) into the extracted directory, fill in your Elasticsearch endpoint and API key, then start Prometheus:
-
-```bash
-./prometheus --config.file=prometheus.yml
-```
-
-#### Step 3 — Confirm Data is Flowing
-
-```bash
-curl -s http://localhost:9090/metrics | grep prometheus_remote_storage_samples_in_total
-```
-
-Prometheus UI: `http://localhost:9090`
-
-Test with a quick query
-
-```promql
-    avg(node_load1)
-```
-![Prometheus Metrics in Prometheus](grafana/prometheus-grafana/assets/prom-self-managed-graph.png)
-
-#### Step 4 — View in Grafana (Optional)
-If you want to see what it looks like in Grafana that is easy too! 
-
-Simply create a `docker-compose.yml`
-
-```yml
-version: '3.8'
-services:
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    restart: unless-stopped
-    environment:
-      - TERM=linux
-      - GF_PLUGINS_PREINSTALL=grafana-clock-panel,grafana-polystat-panel
-    ports:
-      - '3000:3000'
-    volumes:
-      - 'grafana_storage:/var/lib/grafana'
-volumes:
-  grafana_storage: {}
-```
-
-```bash
-docker compose up -d
-```
-
-Navigate to `http://localhost:3000/`
-
-Drilldown → Metrics 
-
-![Prometheus metrics in Grafana](grafana/prometheus-grafana/assets/grafana-self-managed-prom.png)
-
 
 ---
 
@@ -756,6 +635,105 @@ FROM metrics-*
 ```
 
 OTLP metrics land in `metrics-*` data streams namespaced by the OTLP resource attributes (`data_stream.dataset` and `data_stream.namespace`). You should see rows with `host.name` matching your monitored hosts.
+
+---
+
+## Full Local Test: Node Exporter + Prometheus → Elasticsearch
+
+End-to-end walkthrough to get metrics flowing from your local machine to Elasticsearch in under 10 minutes.
+
+#### Step 1 — Download and Run Node Exporter
+
+Node Exporter exposes host-level OS metrics (CPU, memory, disk, network) on port `9100`.
+
+**macOS**
+```bash
+# Download (Apple Silicon — change darwin-arm64 to darwin-amd64 for Intel)
+curl -LO https://github.com/prometheus/node_exporter/releases/latest/download/node_exporter-$(curl -s https://api.github.com/repos/prometheus/node_exporter/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)-darwin-arm64.tar.gz
+tar xzf node_exporter-*.tar.gz
+cd node_exporter-*/
+./node_exporter
+```
+
+**Linux**
+```bash
+curl -LO https://github.com/prometheus/node_exporter/releases/latest/download/node_exporter-$(curl -s https://api.github.com/repos/prometheus/node_exporter/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)-linux-amd64.tar.gz
+tar xzf node_exporter-*.tar.gz
+cd node_exporter-*/
+./node_exporter
+```
+
+Verify: `curl -s http://localhost:9100/metrics | head -20`
+
+#### Step 2 — Download and Run Prometheus
+
+**macOS**
+```bash
+curl -LO https://github.com/prometheus/prometheus/releases/latest/download/prometheus-$(curl -s https://api.github.com/repos/prometheus/prometheus/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)-darwin-arm64.tar.gz
+tar xzf prometheus-*.tar.gz
+cd prometheus-*/
+```
+
+**Linux**
+```bash
+curl -LO https://github.com/prometheus/prometheus/releases/latest/download/prometheus-$(curl -s https://api.github.com/repos/prometheus/prometheus/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)-linux-amd64.tar.gz
+tar xzf prometheus-*.tar.gz
+cd prometheus-*/
+```
+
+Copy [`grafana/prometheus-grafana/prometheus.yml`](grafana/prometheus-grafana/prometheus.yml) into the extracted directory, fill in your Elasticsearch endpoint and API key, then start Prometheus:
+
+```bash
+./prometheus --config.file=prometheus.yml
+```
+
+#### Step 3 — Confirm Data is Flowing
+
+```bash
+curl -s http://localhost:9090/metrics | grep prometheus_remote_storage_samples_in_total
+```
+
+Prometheus UI: `http://localhost:9090`
+
+Test with a quick query
+
+```promql
+    avg(node_load1)
+```
+![Prometheus Metrics in Prometheus](grafana/prometheus-grafana/assets/prom-self-managed-graph.png)
+
+#### Step 4 — View in Grafana (Optional)
+If you want to see what it looks like in Grafana that is easy too! 
+
+Simply create a `docker-compose.yml`
+
+```yml
+version: '3.8'
+services:
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      - TERM=linux
+      - GF_PLUGINS_PREINSTALL=grafana-clock-panel,grafana-polystat-panel
+    ports:
+      - '3000:3000'
+    volumes:
+      - 'grafana_storage:/var/lib/grafana'
+volumes:
+  grafana_storage: {}
+```
+
+```bash
+docker compose up -d
+```
+
+Navigate to `http://localhost:3000/`
+
+Drilldown → Metrics 
+
+![Prometheus metrics in Grafana](grafana/prometheus-grafana/assets/grafana-self-managed-prom.png)
 
 ---
 
