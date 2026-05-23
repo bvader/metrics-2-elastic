@@ -547,7 +547,7 @@ Copy [`./datadog/agent-otel-elasticsearch/otel-collector-config.yaml`](./datadog
 
 | Placeholder | Where to find it |
 |-------------|-----------------|
-| `<ELASTIC_CLOUD_INGEST_ENDPOINT>` | Elastic Cloud console → Deployment → Copy the OTLP endpoint (gRPC, typically `https://<deployment>.apm.<region>.aws.elastic-cloud.com`) |
+| `<ELASTIC_CLOUD_INGEST_ENDPOINT>` | Elastic Cloud console → Deployment → Copy the OTLP endpoint (gRPC, typically `https://<deployment>.ingest.<region>.aws.elastic-cloud.com`) |
 | `<YOUR_BASE64_API_KEY>` | The `encoded` field from the API key creation response (see [Common Prerequisites](#common-prerequisites)) |
 
 Start the Collector:
