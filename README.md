@@ -119,7 +119,7 @@ flowchart LR
 |-------------|-------|
 | Grafana Alloy | [grafana.com/docs/alloy/latest/get-started/install/](https://grafana.com/docs/alloy/latest/get-started/install/) |
 | Grafana Cloud account | Fleet Management requires a Grafana Cloud stack |
-| Elasticsearch 8.x or Serverless | Elastic Cloud Hosted or Serverless deployment |
+| Elasticsearch 9.4+ or Serverless | Elastic Cloud Hosted or Serverless deployment |
 | Elasticsearch API Key | `write` access to `metrics-*` data streams |
 
 ### Setup
@@ -301,7 +301,7 @@ flowchart LR
 | Requirement | Notes |
 |-------------|-------|
 | Prometheus 2.x | [prometheus.io/download](https://prometheus.io/download/) |
-| Elasticsearch 8.x or Serverless | Elastic Cloud Hosted or Serverless deployment |
+| Elasticsearch 9.4+ or Serverless | Elastic Cloud Hosted or Serverless deployment |
 | Elasticsearch API Key | `write` access to `metrics-*` data streams |
 | Grafana OSS 10.x+ _(optional)_ | For self-managed dashboards |
 | Grafana Cloud account _(optional)_ | For cloud metrics |
@@ -521,7 +521,7 @@ flowchart LR
 |-------------|-------|
 | DataDog Agent 7.x | [docs.datadoghq.com/agent/](https://docs.datadoghq.com/agent/) |
 | OTEL Collector Contrib | Must use the **contrib** distribution for `datadogreceiver`; `otlphttp` exporter is in both core and contrib |
-| Elasticsearch 8.x or Serverless | Elastic Cloud Hosted or Serverless deployment |
+| Elasticsearch 9.4+ or Serverless | Elastic Cloud Hosted or Serverless deployment |
 | Elasticsearch API Key | `write` access to `metrics-*` data streams (see [Common Prerequisites](#common-prerequisites)) |
 | DataDog API Key | Same key the Agent already uses |
 

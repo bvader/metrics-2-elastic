@@ -68,4 +68,4 @@ Provide working sample code, configuration, and architecture diagrams enabling u
 ## Technical Constraints
 - No hardcoded credentials — use placeholder strings throughout
 - Configs must work against current stable versions of each tool at time of writing
-- Elasticsearch target: 8.x / Serverless (note any version-specific behavior)
+- Elasticsearch target: 9.4+ / Serverless (note any version-specific behavior)
