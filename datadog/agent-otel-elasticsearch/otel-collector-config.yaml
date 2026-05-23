@@ -12,7 +12,11 @@
 
 receivers:
   datadog:
-    # Accepts DataDog wire-format metrics from the Agent's additional_endpoints config
+    # datadogreceiver — listens for metrics in the DataDog wire format.
+    # The DataDog Agent sends a copy of all metrics here via additional_endpoints in datadog.yaml,
+    # while its primary dd_url connection to app.datadoghq.com continues unaffected.
+    # Port 8080 is used to avoid conflicts with the DataDog Agent's built-in OTEL Collector
+    # which already occupies the default OTLP ports (:4317/:4318).
     endpoint: 0.0.0.0:8080
 
 processors:
