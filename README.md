@@ -578,6 +578,77 @@ flowchart LR
 3. **OTEL Collector `datadogreceiver`** accepts that copy and has no outbound connection to DataDog — it is purely an Elasticsearch forwarder.
 4. **`otlp/elasticsearch` exporter** ships the metrics to Elasticsearch via OTLP gRPC. Metrics land in `metrics-*` data streams, namespaced by OTLP resource attributes. The config also defines an `elasticsearch` exporter (native ES exporter) as a commented-out alternative — swap it into the pipeline if you prefer document-level control over the OTLP path.
 
+### OTEL Collector Deployment Patterns
+
+The OTEL Collector can be deployed in two ways. The choice depends on your environment size and network topology.
+
+#### Option A — Same-Host Collector (shown above)
+
+The Collector runs on the **same host** as the DataDog Agent. Each host runs its own Collector instance. `additional_endpoints` in `datadog.yaml` points to `localhost:8080`.
+
+- Simple to set up — no network changes required
+- Each host is self-contained; the Collector only sees metrics from its own Agent
+- Suitable for small environments or where routing to a central host is impractical
+
+#### Option B — Gateway Collector
+
+A **single OTEL Collector** runs on a dedicated host and receives metrics from **multiple DataDog Agents**. Each Agent's `additional_endpoints` points to the Collector host's IP/hostname instead of `localhost`.
+
+- One Collector instance serves all hosts — fewer components to manage
+- Requires the Collector host to be reachable from all Agent hosts on port 8080
+- Scales horizontally: run the Collector behind a load balancer for high-volume environments
+
+```mermaid
+flowchart LR
+    subgraph host1["Host 1"]
+        DA1["DataDog Agent"]
+    end
+    subgraph host2["Host 2"]
+        DA2["DataDog Agent"]
+    end
+    subgraph hostn["Host N"]
+        DAN["DataDog Agent"]
+    end
+
+    subgraph datadog["DataDog Platform"]
+        DI["DataDog Intake API"]
+        DM["Metrics Explorer\n& Dashboards"]
+        DI --> DM
+    end
+
+    subgraph gateway["Gateway Host"]
+        OC["OTEL Collector\n(datadogreceiver :8080)"]
+    end
+
+    subgraph elastic["Elasticsearch"]
+        ES["Elasticsearch\n(ECH or Serverless)\nmetrics-* data stream"]
+        KB["Kibana\n(Discover / Dashboards)"]
+        ES --> KB
+    end
+
+    DA1 -- "primary dd_url" --> DI
+    DA2 -- "primary dd_url" --> DI
+    DAN -- "primary dd_url" --> DI
+
+    DA1 -- "additional_endpoints" --> OC
+    DA2 -- "additional_endpoints" --> OC
+    DAN -- "additional_endpoints" --> OC
+
+    OC -- "OTLP\n(HTTPS + ES API Key)" --> ES
+```
+
+To use the gateway pattern, change `additional_endpoints` in each host's `datadog.yaml` to point at the Collector host instead of `localhost`:
+
+```yaml
+additional_endpoints:
+  "http://<COLLECTOR_HOST_IP>:8080":
+    - <YOUR_DD_API_KEY>
+```
+
+The OTEL Collector config is identical for both patterns — only the network address in `datadog.yaml` changes.
+
+---
+
 ### Prerequisites
 
 | Requirement | Notes |
