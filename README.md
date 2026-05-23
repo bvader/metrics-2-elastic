@@ -1,5 +1,6 @@
 # metrics-2-elastic
 
+## What?
 Sample code, configurations, and architecture diagrams for shipping metrics from third-party observability platforms into **Elasticsearch** (Elastic Cloud Hosted, Elastic Serverless or Elastic Self Manageed).
 
 ## Why?
