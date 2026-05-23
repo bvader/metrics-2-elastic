@@ -518,15 +518,7 @@ flowchart LR
     OC -- "OTLP\n(HTTPS + ES API Key)" --> ES
 ```
 
-To use the gateway pattern, change `additional_endpoints` in each host's `datadog.yaml` to point at the Collector host instead of `localhost`:
 
-```yaml
-additional_endpoints:
-  "http://<COLLECTOR_HOST_IP>:8080":
-    - <YOUR_DD_API_KEY>
-```
-
-The OTEL Collector config is identical for both patterns — only the network address in `datadog.yaml` changes.
 
 ---
 
@@ -589,11 +581,25 @@ additional_endpoints:
     - <YOUR_DD_API_KEY>
 ```
 
+To use the gateway pattern, change `additional_endpoints` in each host's `datadog.yaml` to point at the Collector host instead of `localhost`:
+
+```yaml
+additional_endpoints:
+  "http://<COLLECTOR_HOST_IP>:8080":
+    - <YOUR_DD_API_KEY>
+```
+
+The OTEL Collector config is identical for both patterns — only the network address in `datadog.yaml` changes.
+
 Then restart the DataDog Agent to apply the change:
 
 ```bash
 sudo systemctl restart datadog-agent
 ```
+
+After restarting the Agent you should be able to see the updated `datadog.yaml` configuration reflected in the DataDog Fleet Management UI.
+
+![DataDog Fleet Management UI](datadog/assets/datadog-fleet-ui.png)
 
 #### 4. Verify Data is Flowing
 
@@ -607,14 +613,18 @@ journalctl -u otelcol-contrib -f
 
 **Check DataDog** — metrics should continue appearing in Metrics Explorer uninterrupted (the primary `dd_url` path was never changed).
 
+![DataDog Metrics Explorer](datadog/assets/datadog-ui-metrics.png)
+
 **Check Elasticsearch** — Kibana → Discover → ES|QL:
 
 ```esql
-FROM metrics-*
-| WHERE @timestamp > NOW() - 5 minutes
-| KEEP @timestamp, host.name, data_stream.dataset, data_stream.namespace
-| LIMIT 20
+TS metrics-datadogreceiver.otel-default
 ```
+
+And you should see something like this.
+
+![DataDog metrics in Elasticsearch](datadog/assets/datadog-ts-metrics.png)
+
 
 OTLP metrics land in `metrics-*` data streams namespaced by the OTLP resource attributes (`data_stream.dataset` and `data_stream.namespace`). You should see rows with `host.name` matching your monitored hosts.
 
