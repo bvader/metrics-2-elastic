@@ -27,7 +27,7 @@ processors:
     limit_mib: 512
 
 exporters:
-  # Active exporter: OTLP to Elastic Cloud ingest endpoint (APM/Fleet server)
+  # Active exporter: OTLP to Elastic Cloud or Elastic Serverless ingest endpoint
   otlp/elasticsearch:
     endpoint: <ELASTIC_CLOUD_INGEST_ENDPOINT>
     # Find your OTLP endpoint: Elastic Cloud console → Deployment → Copy endpoint
