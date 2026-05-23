@@ -421,7 +421,7 @@ flowchart LR
 
 1. **DataDog Agent** continues to ship metrics directly to `app.datadoghq.com` via its primary `dd_url` — this path is completely unchanged.
 2. **`additional_endpoints`** in `datadog.yaml` instructs the Agent to also post a copy of all metrics to the local OTEL Collector on port 8080, using the same DataDog wire format.
-3. **OTEL Collector `datadogreceiver`** accepts that copy and has no outbound connection to DataDog — it is purely an Elasticsearch forwarder.
+3. **OTEL Collector `datadogreceiver`** listens for metrics in the DataDog wire format on port 8080. It has no outbound connection to DataDog — it is purely an Elasticsearch forwarder. Port 8080 is used to avoid conflicts with the DataDog Agent's built-in OTEL Collector, which already occupies the default OTLP ports (`:4317`/`:4318`).
 4. **`otlp/elasticsearch` exporter** ships the metrics to Elasticsearch via OTLP gRPC. Metrics land in `metrics-*` data streams, namespaced by OTLP resource attributes. The config also defines an `elasticsearch` exporter (native ES exporter) as a commented-out alternative — swap it into the pipeline if you prefer document-level control over the OTLP path.
 
 ### OTEL Collector Deployment Patterns
