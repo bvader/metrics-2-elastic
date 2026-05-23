@@ -581,6 +581,20 @@ docker run --rm \
 
 For this walkthrough we use Docker to run the OTEL Collector (see Step 2 above). The `otel-collector-config.yaml` is identical regardless of whether you use the same-host or gateway deployment pattern — only the `additional_endpoints` address in the DataDog Agent config changes.
 
+Edit `/etc/datadog-agent/datadog.yaml` and add the `additional_endpoints` block pointing at your OTEL Collector:
+
+```yaml
+additional_endpoints:
+  "http://localhost:8080":
+    - <YOUR_DD_API_KEY>
+```
+
+Then restart the DataDog Agent to apply the change:
+
+```bash
+sudo systemctl restart datadog-agent
+```
+
 #### 4. Verify Data is Flowing
 
 **Check the OTEL Collector logs** — you should see metrics received and exported without errors:
