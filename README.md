@@ -544,18 +544,7 @@ The OTEL Collector config is identical for both patterns — only the network ad
 
 The **contrib** distribution is required — it contains `datadogreceiver`. The `otlphttp` exporter used to ship to Elasticsearch is included in both core and contrib.
 
-**macOS (Homebrew)**
-```bash
-brew install opentelemetry-collector-contrib
-```
-
-**Linux (Debian/Ubuntu)**
-```bash
-# Replace <VERSION> with the latest release from https://github.com/open-telemetry/opentelemetry-collector-contrib/releases
-curl -LO https://github.com/open-telemetry/opentelemetry-collector-contrib/releases/latest/download/otelcol-contrib_linux_amd64.tar.gz
-tar xzf otelcol-contrib_linux_amd64.tar.gz
-sudo mv otelcol-contrib /usr/local/bin/
-```
+Please refer to the official installation documentation: [opentelemetry.io/docs/collector/install/](https://opentelemetry.io/docs/collector/install/)
 
 **Docker**
 ```bash
