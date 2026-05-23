@@ -15,13 +15,13 @@ Provide working sample code, configuration, and architecture diagrams enabling u
 | ID | Status | Use Case | Source | Destination |
 |----|--------|----------|--------|-------------|
 | G1 | ✅ Done | Prometheus + Grafana (self-managed or Grafana Cloud) | Prometheus `remote_write` | Elasticsearch (ECH or Serverless); optional Grafana Cloud Metrics in parallel |
-| G2 | 🔲 Todo | Grafana Alloy + Grafana Cloud | Alloy collector → Grafana Cloud → Elasticsearch | Elasticsearch |
+| G2 | ✅ Done | Grafana Alloy + Grafana Cloud | Alloy collector → Grafana Cloud → Elasticsearch | Elasticsearch |
 
 ### DataDog
 
 | ID | Status | Use Case | Source | Destination |
 |----|--------|----------|--------|-------------|
-| D1 | 🔲 Todo | DataDog Agent → OTEL Collector → Elasticsearch | DD Agent OTLP export → OTEL Collector | Elasticsearch (ECH or Serverless) |
+| D1 | ✅ Done | DataDog Agent → OTEL Collector → Elasticsearch | DD Agent OTLP export → OTEL Collector | Elasticsearch (ECH or Serverless) |
 
 ## Deliverables per Use Case
 - [ ] Architecture diagram (Mermaid)

@@ -1,0 +1,54 @@
+# OpenTelemetry Collector — DataDog Agent (additional_endpoints) → OTEL Collector → Elasticsearch
+#
+# Distribution required: opentelemetry-collector-contrib (contains datadogreceiver)
+# Install: https://github.com/open-telemetry/opentelemetry-collector-contrib/releases
+#
+# How it works:
+#   1. The DataDog Agent keeps its primary dd_url pointing at app.datadoghq.com
+#   2. additional_endpoints in datadog.yaml also sends a copy to this collector (:8080)
+#   3. The collector receives metrics in the DataDog wire format and forwards ONLY to Elasticsearch
+#
+# The DataDog flow is completely independent — this collector is purely an ES forwarder.
+
+receivers:
+  datadog:
+    # Accepts DataDog wire-format metrics from the Agent's additional_endpoints config
+    endpoint: 0.0.0.0:8080
+
+processors:
+  batch:
+    # Buffer up to 10 s or 1 000 data points before flushing — reduces request overhead
+    timeout: 10s
+    send_batch_size: 1000
+
+  memory_limiter:
+    # Prevent OOM if a burst of metrics arrives; adjust to ~50% of available RAM
+    check_interval: 5s
+    limit_mib: 512
+
+exporters:
+  elasticsearch:
+    endpoint: "https://<YOUR_ES_ENDPOINT>"
+    headers:
+      # Base64-encoded API key from Elasticsearch (the `encoded` field in the API key response)
+      Authorization: "ApiKey <YOUR_BASE64_API_KEY>"
+    tls:
+      insecure: false
+    # Retry on transient failures; avoids metric loss during brief ES unavailability
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+  otlp/elasticsearch:
+    endpoint: <ELASTIC_CLOUD_INGEST_ENDPOINT>
+    headers:
+      Authorization: ApiKey <YOUR_BASE64_API_KEY>
+
+
+service:
+  pipelines:
+    metrics:
+      receivers: [datadog]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/elasticsearch]
