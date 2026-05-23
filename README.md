@@ -562,8 +562,6 @@ docker run --rm \
 
 #### 3. Add the OTEL Collector as an Additional Endpoint
 
-> **TODO:** Add steps and screenshots for configuring `additional_endpoints` via **DataDog Fleet Management** (remote Agent configuration) rather than editing `datadog.yaml` manually on each host.
-
 For this walkthrough we use Docker to run the OTEL Collector (see Step 2 above). The `otel-collector-config.yaml` is identical regardless of whether you use the same-host or gateway deployment pattern — only the `additional_endpoints` address in the DataDog Agent config changes.
 
 Edit `/etc/datadog-agent/datadog.yaml` and add the `additional_endpoints` block pointing at your OTEL Collector (use `localhost:8080` for Option A, or the gateway host IP for Option B — see [Deployment Patterns](#otel-collector-deployment-patterns) above):

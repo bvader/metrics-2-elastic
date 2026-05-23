@@ -36,7 +36,7 @@ Provide working sample code, configuration, and architecture diagrams enabling u
 - [x] Screenshots in `assets/` subdirectory per use case
 - [x] Notes on Elastic Cloud Hosted vs. Serverless differences where applicable
 - [ ] Grafana data source / dashboard setup steps (TODO in Grafana 2 and Full Local Test)
-- [ ] DataDog Fleet Management screenshots for `additional_endpoints` config (TODO in DataDog 1 Step 3)
+
 
 ## Learned Conventions
 
