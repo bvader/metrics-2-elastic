@@ -31,7 +31,7 @@ exporters:
   otlp/elasticsearch:
     endpoint: <ELASTIC_CLOUD_INGEST_ENDPOINT>
     # Find your OTLP endpoint: Elastic Cloud console → Deployment → Copy endpoint
-    # Typically: https://<deployment>.apm.<region>.aws.elastic-cloud.com
+    # Typically: https://<deployment>.ingest.<region>.aws.elastic-cloud.com
     headers:
       Authorization: ApiKey <YOUR_BASE64_API_KEY>
 
