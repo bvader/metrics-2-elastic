@@ -542,35 +542,6 @@ flowchart LR
 
 The DataDog Agent keeps its primary connection to DataDog unchanged. A copy of all metrics is also sent to a local OTEL Collector via `additional_endpoints`. The Collector's only job is to forward that copy to Elasticsearch — it has no DataDog exporter and no involvement in the primary DataDog flow.
 
-```mermaid
-flowchart LR
-    subgraph hosts["Monitored Hosts"]
-        direction TB
-        I1["App / Service\n(DogStatsD or APM SDK)"]
-        I2["Host OS\n(system metrics)"]
-        DA["DataDog Agent\n(collect + forward)"]
-        OC["OTEL Collector\n(datadogreceiver)"]
-        I1 -- "DogStatsD UDP :8125\nor APM :8126" --> DA
-        I2 -- "system checks" --> DA
-        DA -- "additional_endpoints\nHTTP + DD API Key (:8080)" --> OC
-    end
-
-    subgraph datadog["DataDog Platform"]
-        DI["DataDog Intake API"]
-        DM["Metrics Explorer\n& Dashboards"]
-        DI --> DM
-    end
-
-    subgraph elastic["Elasticsearch"]
-        ES["Elasticsearch\n(ECH or Serverless)\nmetrics-* data stream"]
-        KB["Kibana\n(Discover / Dashboards)"]
-        ES --> KB
-    end
-
-    DA -- "HTTPS + DD API Key\n(primary dd_url)" --> DI
-    OC -- "OTLP gRPC\n(HTTPS + ES API Key)" --> ES
-```
-
 ### How It Works
 
 1. **DataDog Agent** continues to ship metrics directly to `app.datadoghq.com` via its primary `dd_url` — this path is completely unchanged.
