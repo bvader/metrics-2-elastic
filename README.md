@@ -1,11 +1,12 @@
 # metrics-2-elastic
 
 ## What?
-Sample code, configurations, and architecture diagrams for shipping metrics from third-party observability platforms into **Elasticsearch** (Elastic Cloud Hosted, Elastic Serverless or Elastic Self Manageed).
+
+Sample code, configurations, and architecture diagrams for shipping metrics from third-party observability platforms into **Elasticsearch** (Elastic Cloud Hosted, Elastic Serverless or Elastic Self Managed).
 
 ## Why?
 
-Teams running Prometheus/Grafana or DataDog often want a single observability backend — or are evaluating Elasticsearch as their metrics store. This repo provides ready-to-use patterns for each common ingest path. Note these are not neccesarily production grade / scaled configuration but should provide a quick path for test and evaluation. 
+Teams running Prometheus/Grafana or DataDog often want a single observability backend — or are evaluating Elasticsearch as their metrics store. This repo provides ready-to-use patterns for each common ingest path. Note these are not necessarily production grade / scaled configuration but should provide a quick path for test and evaluation.
 
 ---
 
@@ -131,8 +132,6 @@ In Grafana Cloud, navigate to **Fleet Management → Remote Configuration → Ed
 
 You will see an auto-generated Alloy configuration. The two blocks relevant to this setup are explained below.
 
----
-
 **`prometheus.relabel`** — filters which metrics are forwarded
 
 ```alloy
@@ -147,8 +146,6 @@ prometheus.relabel "integrations_node_exporter" {
 ```
 
 This component sits between the scraper and the remote_write destination. It filters scraped samples by metric name and forwards the matching set to `prometheus.remote_write.metrics_service.receiver`.
-
----
 
 **`prometheus.remote_write "metrics_service"`** — ships metrics to Grafana Cloud
 
@@ -169,8 +166,6 @@ prometheus.remote_write "metrics_service" {
 
 - `username` — your Grafana Cloud **instance ID** (numeric, found in the Cloud Portal)
 - `password` — read from the `GCLOUD_RW_API_KEY` environment variable at runtime (never hardcoded)
-
----
 
 #### 2. Add an Elasticsearch `remote_write` Endpoint
 
@@ -220,7 +215,7 @@ Confirm data in Grafana Cloud — your stack → Explore → Metrics:
 
 #### 4. Troubleshooting
 
-If the metrics are not flowing, got to the Connections → Fleet Management → Click the host you Configured →  Logs. Look at the messages and debug. Fix the issue and try again.
+If the metrics are not flowing, go to Connections → Fleet Management → click the host you configured → Logs. Review the messages, fix the issue, and try again.
 
 ![Troubleshoting Prometheus metrics in Grafana Cloud](grafana/alloy-grafana-cloud/assets/grafana-alloy-troubleshooting.png)
 
@@ -419,10 +414,6 @@ flowchart LR
 
 ---
 
-### Architecture: DataDog Agent → DataDog + OTEL Collector → Elasticsearch
-
-The DataDog Agent keeps its primary connection to DataDog unchanged. A copy of all metrics is also sent to a local OTEL Collector via `additional_endpoints`. The Collector's only job is to forward that copy to Elasticsearch — it has no DataDog exporter and no involvement in the primary DataDog flow.
-
 ### How It Works
 
 1. **DataDog Agent** continues to ship metrics directly to `app.datadoghq.com` via its primary `dd_url` — this path is completely unchanged.
@@ -575,23 +566,13 @@ docker run --rm \
 
 For this walkthrough we use Docker to run the OTEL Collector (see Step 2 above). The `otel-collector-config.yaml` is identical regardless of whether you use the same-host or gateway deployment pattern — only the `additional_endpoints` address in the DataDog Agent config changes.
 
-Edit `/etc/datadog-agent/datadog.yaml` and add the `additional_endpoints` block pointing at your OTEL Collector:
+Edit `/etc/datadog-agent/datadog.yaml` and add the `additional_endpoints` block pointing at your OTEL Collector (use `localhost:8080` for Option A, or the gateway host IP for Option B — see [Deployment Patterns](#otel-collector-deployment-patterns) above):
 
 ```yaml
 additional_endpoints:
   "http://localhost:8080":
     - <YOUR_DD_API_KEY>
 ```
-
-To use the gateway pattern, change `additional_endpoints` in each host's `datadog.yaml` to point at the Collector host instead of `localhost`:
-
-```yaml
-additional_endpoints:
-  "http://<COLLECTOR_HOST_IP>:8080":
-    - <YOUR_DD_API_KEY>
-```
-
-The OTEL Collector config is identical for both patterns — only the network address in `datadog.yaml` changes.
 
 Then restart the DataDog Agent to apply the change:
 
@@ -626,9 +607,6 @@ TS metrics-datadogreceiver.otel-default
 And you should see something like this.
 
 ![DataDog metrics in Elasticsearch](datadog/assets/datadog-ts-metrics.png)
-
-
-OTLP metrics land in `metrics-*` data streams namespaced by the OTLP resource attributes (`data_stream.dataset` and `data_stream.namespace`). You should see rows with `host.name` matching your monitored hosts.
 
 ---
 
@@ -675,7 +653,7 @@ tar xzf prometheus-*.tar.gz
 cd prometheus-*/
 ```
 
-Copy [`grafana/prometheus-grafana/prometheus.yml`](grafana/prometheus-grafana/prometheus.yml) into the extracted directory and fill in your Elasticsearch endpoint and API key in the `remote_write` block:
+Copy [`grafana/prometheus-grafana/prometheus.yml`](grafana/prometheus-grafana/prometheus.yml) into the extracted directory. The config already includes a `scrape_configs` block that targets Node Exporter on `:9100` — fill in your Elasticsearch endpoint and API key in the `remote_write` block:
 
 ```yaml
 remote_write:
@@ -754,6 +732,6 @@ Confirm data in Elasticsearch — Kibana → Discover → ES|QL:
 ```esql
 TS metrics-generic.prometheus-default
 ```
-![Alloy / Prometheus metrics in Elasticsearch](grafana/alloy-grafana-cloud/assets/elastic-grafana-alloy-prom.png)
+![Prometheus metrics in Elasticsearch](grafana/prometheus-grafana/assets/elastic-self-managed-prom.png)
 
-
+---
