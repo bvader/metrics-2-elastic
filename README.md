@@ -575,32 +575,9 @@ docker run --rm \
 
 #### 3. Add the OTEL Collector as an Additional Endpoint
 
-Edit `/etc/datadog-agent/datadog.yaml` on each host. Do **not** change `dd_url` — add `additional_endpoints` so the Agent sends a copy to the OTEL Collector while the primary DataDog flow continues uninterrupted.
+> **TODO:** Add steps and screenshots for configuring `additional_endpoints` via **DataDog Fleet Management** (remote Agent configuration) rather than editing `datadog.yaml` manually on each host.
 
-```yaml
-# /etc/datadog-agent/datadog.yaml
-
-# Primary DataDog destination — leave this unchanged (or omit; it defaults to app.datadoghq.com)
-# dd_url: https://app.datadoghq.com
-
-# Send a copy to the local OTEL Collector for Elasticsearch forwarding.
-# The key here must be a valid DD API key (the collector's datadogreceiver validates it).
-additional_endpoints:
-  "http://localhost:8080":
-    - <YOUR_DD_API_KEY>
-```
-
-Restart the Agent:
-
-```bash
-# Linux
-sudo systemctl restart datadog-agent
-
-# macOS
-launchctl stop com.datadoghq.agent && launchctl start com.datadoghq.agent
-```
-
-> **Note:** If the OTEL Collector runs on a separate host, replace `localhost` with that host's IP or hostname and ensure port 8080 is reachable from the Agent host.
+For this walkthrough we use Docker to run the OTEL Collector (see Step 2 above). The `otel-collector-config.yaml` is identical regardless of whether you use the same-host or gateway deployment pattern — only the `additional_endpoints` address in the DataDog Agent config changes.
 
 #### 4. Verify Data is Flowing
 
