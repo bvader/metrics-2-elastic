@@ -1,10 +1,10 @@
 # metrics-2-elastic
 
-Sample code, configurations, and architecture diagrams for shipping metrics from third-party observability platforms into **Elasticsearch** (Elastic Cloud Hosted or Elastic Serverless).
+Sample code, configurations, and architecture diagrams for shipping metrics from third-party observability platforms into **Elasticsearch** (Elastic Cloud Hosted, Elastic Serverless or Elastic Self Manageed).
 
 ## Why?
 
-Teams running Prometheus/Grafana or DataDog often want a single observability backend — or are evaluating Elasticsearch as their metrics store. This repo provides ready-to-use patterns for each common ingest path.
+Teams running Prometheus/Grafana or DataDog often want a single observability backend — or are evaluating Elasticsearch as their metrics store. This repo provides ready-to-use patterns for each common ingest path. Note these are not neccesarily production grade / scaled configuration but should provide a quick path for test and evaluation. 
 
 ---
 
@@ -687,15 +687,6 @@ FROM metrics-*
 OTLP metrics land in `metrics-*` data streams namespaced by the OTLP resource attributes (`data_stream.dataset` and `data_stream.namespace`). You should see rows with `host.name` matching your monitored hosts.
 
 ---
-
-## Contributing
-
-To add a new use case:
-1. Create a new subdirectory under the appropriate platform folder.
-2. Add sample configs with inline comments on every non-obvious field.
-3. Add a section to this README following the pattern above (Architecture → How It Works → Prerequisites → Setup → Verification).
-4. Include a Mermaid architecture diagram and screenshots in an `assets/` subdirectory.
-5. Use placeholder strings (`<YOUR_API_KEY>`) — never hardcode real values.
 
 ## License
 
