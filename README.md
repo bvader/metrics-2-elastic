@@ -30,7 +30,7 @@ Elastic is now a fully interoperable metrics solution, supporting OTEL and nativ
 
 ## Common Prerequisites
 
-- Access to an Elasticsearch deployment (ECH or Serverless)
+- Access to an Elasticsearch deployment (ECH, Serverless or Self Managed)
 - An Elasticsearch API key with `write` access to `metrics-*` data streams
 - Familiarity with the source metrics platform (Prometheus, Grafana, or DataDog)
 
