@@ -365,10 +365,6 @@ TS metrics-generic.prometheus-default
 
 ![Prometheus metrics in Elasticsearch](grafana/prometheus-grafana/assets/elastic-self-managed-prom.png)
 
-#### 4. Configure Grafana to Visualise Elasticsearch Metrics
-
-> **TODO:** Add steps for configuring Elasticsearch as a Grafana data source and building a dashboard from the `metrics-generic.prometheus-default` data stream.
-
 ---
 
 ## DataDog 1: DataDog Agent → OTEL Collector → Elasticsearch
