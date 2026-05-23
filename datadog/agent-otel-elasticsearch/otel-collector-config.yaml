@@ -1,7 +1,7 @@
 # OpenTelemetry Collector — DataDog Agent (additional_endpoints) → OTEL Collector → Elasticsearch
 #
 # Distribution required: opentelemetry-collector-contrib (contains datadogreceiver)
-# Install: https://github.com/open-telemetry/opentelemetry-collector-contrib/releases
+# Install: https://opentelemetry.io/docs/collector/install/
 #
 # How it works:
 #   1. The DataDog Agent keeps its primary dd_url pointing at app.datadoghq.com
@@ -27,24 +27,27 @@ processors:
     limit_mib: 512
 
 exporters:
-  elasticsearch:
-    endpoint: "https://<YOUR_ES_ENDPOINT>"
-    headers:
-      # Base64-encoded API key from Elasticsearch (the `encoded` field in the API key response)
-      Authorization: "ApiKey <YOUR_BASE64_API_KEY>"
-    tls:
-      insecure: false
-    # Retry on transient failures; avoids metric loss during brief ES unavailability
-    retry_on_failure:
-      enabled: true
-      initial_interval: 5s
-      max_interval: 30s
-      max_elapsed_time: 300s
+  # Active exporter: OTLP to Elastic Cloud ingest endpoint (APM/Fleet server)
   otlp/elasticsearch:
     endpoint: <ELASTIC_CLOUD_INGEST_ENDPOINT>
+    # Find your OTLP endpoint: Elastic Cloud console → Deployment → Copy endpoint
+    # Typically: https://<deployment>.apm.<region>.aws.elastic-cloud.com
     headers:
       Authorization: ApiKey <YOUR_BASE64_API_KEY>
 
+  # Alternative exporter: native Elasticsearch HTTP exporter (document-level control)
+  # Swap this into the pipeline below if you prefer direct ES indexing over OTLP.
+  # elasticsearch:
+  #   endpoint: "https://<YOUR_ES_ENDPOINT>"
+  #   headers:
+  #     Authorization: "ApiKey <YOUR_BASE64_API_KEY>"
+  #   tls:
+  #     insecure: false
+  #   retry_on_failure:
+  #     enabled: true
+  #     initial_interval: 5s
+  #     max_interval: 30s
+  #     max_elapsed_time: 300s
 
 service:
   pipelines:
