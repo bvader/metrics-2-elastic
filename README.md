@@ -440,6 +440,8 @@ The Collector runs on the **same host** as the DataDog Agent. Each host runs its
 - Each host is self-contained; the Collector only sees metrics from its own Agent
 - Suitable for small environments or where routing to a central host is impractical
 
+> **Note on port 8080:** The DataDog Agent ships with a built-in OTEL Collector that already listens on the default DataDog receiver port (`:4317`/`:4318`). To avoid a port conflict when running your own OTEL Collector Contrib on the same host, this example uses `:8080` instead.
+
 ```mermaid
 flowchart LR
     subgraph hosts["Monitored Host"]
