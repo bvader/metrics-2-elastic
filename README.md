@@ -675,7 +675,25 @@ tar xzf prometheus-*.tar.gz
 cd prometheus-*/
 ```
 
-Copy [`grafana/prometheus-grafana/prometheus.yml`](grafana/prometheus-grafana/prometheus.yml) into the extracted directory, fill in your Elasticsearch endpoint and API key, then start Prometheus:
+Copy [`grafana/prometheus-grafana/prometheus.yml`](grafana/prometheus-grafana/prometheus.yml) into the extracted directory and fill in your Elasticsearch endpoint and API key in the `remote_write` block:
+
+```yaml
+remote_write:
+  - url: "https://<YOUR_ES_ENDPOINT>/_prometheus/api/v1/write"
+    # ECH:        https://<cluster-id>.es.<region>.aws.elastic-cloud.com/_prometheus/api/v1/write
+    # Serverless: https://<project-id>.es.<region>.aws.elastic.co/_prometheus/api/v1/write
+    name: elasticsearch
+    authorization:
+      type: ApiKey
+      credentials: "<YOUR_BASE64_API_KEY>"
+    queue_config:
+      capacity: 10000
+      max_shards: 50
+      max_samples_per_send: 5000
+      batch_send_deadline: 5s
+```
+
+Then start Prometheus:
 
 ```bash
 ./prometheus --config.file=prometheus.yml
