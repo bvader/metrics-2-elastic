@@ -728,8 +728,4 @@ Drilldown → Metrics
 
 ![Prometheus metrics in Grafana](grafana/prometheus-grafana/assets/grafana-self-managed-prom.png)
 
----
 
-## License
-
-Apache 2.0
