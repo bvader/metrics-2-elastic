@@ -15,6 +15,7 @@ Teams running Prometheus/Grafana or DataDog often want a single observability ba
 | [Grafana 1](#grafana-1-grafana-alloy--grafana-cloud--elasticsearch) | ✅ Done | Grafana Alloy → Grafana Cloud → Elasticsearch |
 | [Grafana 2](#grafana-2-prometheus--grafana--elasticsearch) | ✅ Done | Prometheus + Grafana (self-managed or Grafana Cloud) → Elasticsearch |
 | [DataDog 1](#datadog-1-datadog-agent--otel-collector--elasticsearch) | ✅ Done | DataDog Agent → OTEL Collector → Elasticsearch |
+| [Prometheus Full Local Test](#full-local-test-node-exporter--prometheus--elasticsearch) | ✅ Done | Full local setup: Node Exporter + Prometheus + Grafana → Elasticsearch |
 
 ---
 
