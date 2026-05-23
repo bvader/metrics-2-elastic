@@ -582,13 +582,42 @@ flowchart LR
 
 The OTEL Collector can be deployed in two ways. The choice depends on your environment size and network topology.
 
-#### Option A — Same-Host Collector (shown above)
+#### Option A — Same-Host Collector
 
 The Collector runs on the **same host** as the DataDog Agent. Each host runs its own Collector instance. `additional_endpoints` in `datadog.yaml` points to `localhost:8080`.
 
 - Simple to set up — no network changes required
 - Each host is self-contained; the Collector only sees metrics from its own Agent
 - Suitable for small environments or where routing to a central host is impractical
+
+```mermaid
+flowchart LR
+    subgraph hosts["Monitored Host"]
+        direction TB
+        I1["App / Service\n(DogStatsD or APM SDK)"]
+        I2["Host OS\n(system metrics)"]
+        DA["DataDog Agent\n(collect + forward)"]
+        OC["OTEL Collector\n(datadogreceiver :8080)"]
+        I1 -- "DogStatsD UDP :8125\nor APM :8126" --> DA
+        I2 -- "system checks" --> DA
+        DA -- "additional_endpoints\nHTTP + DD API Key (:8080)" --> OC
+    end
+
+    subgraph datadog["DataDog Platform"]
+        DI["DataDog Intake API"]
+        DM["Metrics Explorer\n& Dashboards"]
+        DI --> DM
+    end
+
+    subgraph elastic["Elasticsearch"]
+        ES["Elasticsearch\n(ECH or Serverless)\nmetrics-* data stream"]
+        KB["Kibana\n(Discover / Dashboards)"]
+        ES --> KB
+    end
+
+    DA -- "primary dd_url\n(HTTPS + DD API Key)" --> DI
+    OC -- "OTLP\n(HTTPS + ES API Key)" --> ES
+```
 
 #### Option B — Gateway Collector
 
