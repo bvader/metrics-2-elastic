@@ -608,6 +608,18 @@ And you should see something like this.
 
 End-to-end walkthrough to get metrics flowing from your local machine to Elasticsearch in under 10 minutes.
 
+### Prerequisites
+
+| Requirement | Notes |
+|-------------|-------|
+| Node Exporter | [github.com/prometheus/node_exporter/releases](https://github.com/prometheus/node_exporter/releases) — downloaded in Step 1 |
+| Prometheus 2.x | [prometheus.io/download](https://prometheus.io/download/) — downloaded in Step 2 |
+| Elasticsearch 9.4+ or Serverless | Elastic Cloud Hosted or Serverless deployment |
+| Elasticsearch API Key | `write` access to `metrics-*` data streams (see [Common Prerequisites](#common-prerequisites)) |
+| Docker _(optional)_ | Required only for the Grafana step (Step 4) |
+
+### Setup
+
 #### Step 1 — Download and Run Node Exporter
 
 Node Exporter exposes host-level OS metrics (CPU, memory, disk, network) on port `9100`.
