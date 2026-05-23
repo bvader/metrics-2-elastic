@@ -748,3 +748,12 @@ Drilldown → Metrics
 ![Prometheus metrics in Grafana](grafana/prometheus-grafana/assets/grafana-self-managed-prom.png)
 
 
+#### Step 5. Verify Data is Flowing
+
+Confirm data in Elasticsearch — Kibana → Discover → ES|QL:
+```esql
+TS metrics-generic.prometheus-default
+```
+![Alloy / Prometheus metrics in Elasticsearch](grafana/alloy-grafana-cloud/assets/elastic-grafana-alloy-prom.png)
+
+
