@@ -13,7 +13,7 @@ Teams running Prometheus/Grafana or DataDog often want a single observability ba
 
 From the Elastic Blog: *Elasticsearch has thus become a leading columnar metrics engine, matching or exceeding the competition (like Prometheus, Mimir, and ClickHouse) in indexing throughput and exceeding it by up to 2.5x in storage efficiency and 30x in query performance. All while maintaining the ability to store logs and other data and fully use the rich querying capabilities of ES|QL (e.g. inline stats, lookup join) — which other PromQL-based systems lack. Elasticsearch can thus serve as a unified storage and query engine for all user data, with no compromises for metrics and observability application*
 
-Elastic is now a fully interopable metrics solution as well supporting OTEL and native Prometheus metrics ingest as well as a unififed query expereince using either ES|QL or native PromQL.
+Elastic is now a fully interoperable metrics solution, supporting OTEL and native Prometheus metrics ingest alongside a unified query experience via ES|QL or native PromQL.
 
 ---
 
