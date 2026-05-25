@@ -6,12 +6,15 @@ Sample code, configurations, and architecture diagrams for shipping metrics from
 
 ## Why?
 
-Teams running Prometheus/Grafana or DataDog often want a single observability backend — or are evaluating Elasticsearch as their metrics store. This repo provides ready-to-use patterns for each common ingest path. Note these are not necessarily production grade / scaled configuration but should provide a quick path for test and evaluation.
+Teams running Prometheus/Grafana or DataDog often want a single observability backend — or are evaluating Elasticsearch as their metrics store. This repo provides ready-to-use patterns for each common ingest paths. These patterns then allow side-by-side comparisons on the metrics enginess and experience. 
+
+Note: These patterns are not necessarily production grade / scaled configuration but should provide a quick path for test and evaluation.
 
 ## Why Now?
 [30x faster than Prometheus: How we rebuilt Elasticsearch as a leading columnar metrics datastore](https://www.elastic.co/search-labs/blog/elasticsearch-columnar-metrics-engine-30x-faster-prometheus)
 
-From the Elastic Blog: *Elasticsearch has thus become a leading columnar metrics engine, matching or exceeding the competition (like Prometheus, Mimir, and ClickHouse) in indexing throughput and exceeding it by up to 2.5x in storage efficiency and 30x in query performance. All while maintaining the ability to store logs and other data and fully use the rich querying capabilities of ES|QL (e.g. inline stats, lookup join) — which other PromQL-based systems lack. Elasticsearch can thus serve as a unified storage and query engine for all user data, with no compromises for metrics and observability application*
+From the Elastic Blog:
+> *Elasticsearch has thus become a leading columnar metrics engine, matching or exceeding the competition (like Prometheus, Mimir, and ClickHouse) in indexing throughput and exceeding it by up to 2.5x in storage efficiency and 30x in query performance. All while maintaining the ability to store logs and other data and fully use the rich querying capabilities of ES|QL (e.g. inline stats, lookup join) — which other PromQL-based systems lack. Elasticsearch can thus serve as a unified storage and query engine for all user data, with no compromises for metrics and observability application*
 
 Elastic is now a fully interoperable metrics solution, supporting OTEL and native Prometheus metrics ingest alongside a unified query experience via ES|QL or native PromQL.
 
