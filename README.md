@@ -79,6 +79,8 @@ The response contains an `encoded` field — that base64 value is used as the AP
 | Auth | API Key or username/password | API Key only |
 | `remote_write` path | `/_prometheus/api/v1/write` | `/_prometheus/api/v1/write` (identical) |
 
+> **Self Managed:** Use your cluster's hostname and port (e.g. `https://<hostname>:9200/_prometheus/api/v1/write`). Auth can be API Key or username/password depending on your security config.
+
 ---
 
 ## Grafana 1: Grafana Alloy + Grafana Cloud + Elasticsearch
@@ -251,7 +253,7 @@ flowchart LR
     subgraph hosts["Monitored Hosts"]
         A1["Host / App\n(Node Exporter or app metrics)"]
         A2["Host / App\n(Node Exporter or app metrics)"]
-        A3["Host / App\n(Anything that can be scraped by Prometheus"]
+        A3["Host / App\n(Anything that can be scraped by Prometheus)"]
     end
 
     subgraph local["Local / Self-Managed"]
@@ -288,7 +290,7 @@ flowchart LR
     subgraph hosts["Monitored Hosts"]
         A1["Host / App\n(Node Exporter or app metrics)"]
         A2["Host / App\n(Node Exporter or app metrics)"]
-        A3["Host / App\n(Anything that can be scraped by Prometheus"]
+        A3["Host / App\n(Anything that can be scraped by Prometheus)"]
     end
 
     subgraph local["Local / Self-Managed"]
@@ -314,6 +316,7 @@ flowchart LR
 1. Prometheus scrapes `/metrics` endpoints on target hosts at the configured interval.
 2. **remote_write to Elasticsearch** — every sample is forwarded over HTTPS using an Elasticsearch API key. Metrics land in the `metrics-generic.prometheus-default` data stream.
 3. **remote_write to Grafana Cloud** _(optional)_ — the same samples are also forwarded to Grafana Cloud Metrics (Mimir) using basic auth (instance ID + API token). Both `remote_write` entries can be active simultaneously.
+4. **Self-managed Grafana** _(optional)_ — Grafana OSS can query Elasticsearch directly using the Elasticsearch data source plugin, allowing you to build dashboards over the `metrics-generic.prometheus-default` data stream alongside any other Elasticsearch data.
 
 ### Prerequisites
 
@@ -427,13 +430,11 @@ flowchart LR
 
 > The sections below insert an OTEL Collector between the DataDog Agent and DataDog. The Collector receives all metrics from the Agent and fans them out to both DataDog and Elasticsearch — the existing DataDog flow is fully preserved.
 
----
-
-### How It Works
+### How It Works (with Elasticsearch)
 
 1. **DataDog Agent** continues to ship metrics directly to `app.datadoghq.com` via its primary `dd_url` — this path is completely unchanged.
 2. **`additional_endpoints`** in `datadog.yaml` instructs the Agent to also post a copy of all metrics to the local OTEL Collector on port 8080, using the same DataDog wire format.
-3. **OTEL Collector `datadogreceiver`** listens for metrics in the DataDog wire format on port 8080. It has no outbound connection to DataDog — it is purely an Elasticsearch forwarder. Port 8080 is used to avoid conflicts with the DataDog Agent's built-in OTEL Collector, which already occupies the default OTLP ports (`:4317`/`:4318`).
+3. **OTEL Collector `datadogreceiver`** listens for metrics in the DataDog wire format on port 8080. It has no outbound connection to DataDog — it is purely an Elasticsearch forwarder.
 4. **`otlp/elasticsearch` exporter** ships the metrics to Elasticsearch via OTLP gRPC. Metrics land in `metrics-*` data streams, namespaced by OTLP resource attributes. The config also defines an `elasticsearch` exporter (native ES exporter) as a commented-out alternative — swap it into the pipeline if you prefer document-level control over the OTLP path.
 
 ### OTEL Collector Deployment Patterns
@@ -615,13 +616,13 @@ journalctl -u otelcol-contrib -f
 TS metrics-datadogreceiver.otel-default
 ```
 
-And you should see something like this.
+Confirm metrics are arriving in the `metrics-datadogreceiver.otel-default` data stream:
 
 ![DataDog metrics in Elasticsearch](datadog/assets/datadog-ts-metrics.png)
 
 ---
 
-## Full Local Test: Node Exporter + Prometheus + Elasticsearch
+## Full Local Test: Node Exporter + Prometheus + Grafana + Elasticsearch
 
 End-to-end walkthrough to get metrics flowing from your local machine to Elasticsearch in under 10 minutes.
 
@@ -637,7 +638,7 @@ End-to-end walkthrough to get metrics flowing from your local machine to Elastic
 
 ### Setup
 
-#### Step 1 — Download and Run Node Exporter
+#### 1. Download and Run Node Exporter
 
 Node Exporter exposes host-level OS metrics (CPU, memory, disk, network) on port `9100`.
 
@@ -660,7 +661,7 @@ cd node_exporter-*/
 
 Verify: `curl -s http://localhost:9100/metrics | head -20`
 
-#### Step 2 — Download and Run Prometheus
+#### 2. Download and Run Prometheus
 
 **macOS**
 ```bash
@@ -700,7 +701,7 @@ Then start Prometheus:
 ./prometheus --config.file=prometheus.yml
 ```
 
-#### Step 3 — Confirm Data is Flowing
+#### 3. Confirm Data is Flowing in Prometheus
 
 ```bash
 curl -s http://localhost:9090/metrics | grep prometheus_remote_storage_samples_in_total
@@ -715,7 +716,7 @@ Test with a quick query
 ```
 ![Prometheus Metrics in Prometheus](grafana/prometheus-grafana/assets/prom-self-managed-graph.png)
 
-#### Step 4 — View in Grafana (Optional)
+#### 4. View in Grafana (Optional)
 If you want to see what it looks like in Grafana that is easy too! 
 
 Simply create a `docker-compose.yml`
@@ -744,12 +745,16 @@ docker compose up -d
 
 Navigate to `http://localhost:3000/`
 
-Drilldown + Metrics 
+**Connect Grafana to Prometheus** — Grafana auto-discovers Prometheus at `http://localhost:9090` in many versions, but if not: Connections + Data sources + Add new data source + Prometheus + set URL to `http://localhost:9090` + Save & test.
+
+Drilldown + Metrics to explore your Node Exporter metrics:
 
 ![Prometheus metrics in Grafana](grafana/prometheus-grafana/assets/grafana-self-managed-prom.png)
 
+**Connect Grafana to Elasticsearch** — to query Elasticsearch from Grafana as well: Connections + Data sources + Add new data source + Elasticsearch + set the URL to your Elasticsearch endpoint + add an `Authorization` header with value `ApiKey <YOUR_BASE64_API_KEY>` + set Index name to `metrics-generic.prometheus-default` + Save & test.
 
-#### Step 5 — Verify Data is Flowing
+
+#### 5. Verify Data is Flowing in Elasticsearch
 
 Confirm data in Elasticsearch — Kibana + Discover + ES|QL:
 ```esql
