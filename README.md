@@ -8,7 +8,7 @@ Sample code, configurations, and architecture diagrams for shipping metrics from
 
 Teams running Prometheus/Grafana or DataDog often want a single observability backend — or are evaluating Elasticsearch as their metrics store. This repo provides ready-to-use patterns for each common ingest path. These patterns allow side-by-side comparisons on the metrics engines and experience.
 
-Note: These patterns are not necessarily production grade / scaled configuration but should provide a quick path for test and evaluation.
+**Note:** These patterns are not necessarily production grade / scaled configuration but should provide a quick path for test and evaluation.
 
 ## Why Now?
 [30x faster than Prometheus: How we rebuilt Elasticsearch as a leading columnar metrics datastore](https://www.elastic.co/search-labs/blog/elasticsearch-columnar-metrics-engine-30x-faster-prometheus)
@@ -26,7 +26,7 @@ Elastic is now a fully interoperable metrics solution, supporting OTEL and nativ
 | ID | Status | Use Case |
 |----|--------|----------|
 | [Grafana 1](#grafana-1-grafana-alloy--grafana-cloud--elasticsearch) | ✅ Done | Grafana Alloy + Grafana Cloud + Elasticsearch |
-| [Grafana 2](#grafana-2-prometheus--grafana--elasticsearch) | ✅ Done | Prometheus + Grafana (self-managed or Grafana Cloud) + Elasticsearch |
+| [Grafana 2](#grafana-2-prometheus--grafana--elasticsearch) | ✅ Done | Node Exporter / App Metrics etc + Prometheus + Grafana (self-managed or Grafana Cloud) + Elasticsearch |
 | [DataDog 1](#datadog-1-datadog-agent--otel-collector--elasticsearch) | ✅ Done | DataDog Agent + OTEL Collector + Elasticsearch |
 | [Prometheus Full Local Test](#full-local-test-node-exporter--prometheus--elasticsearch) | ✅ Done | Full local setup: Node Exporter + Prometheus + Grafana + Elasticsearch |
 
@@ -207,7 +207,7 @@ prometheus.remote_write "metrics_service" {
 
 ![prometheus.remote_write with Elasticsearch endpoint](grafana/alloy-grafana-cloud/assets/grafana-cloud-alloy-editor-2.png)
 
-> **Note:** Alloy uses `headers` for the Elasticsearch endpoint rather than the `authorization` block used in standalone Prometheus. Pass the full `ApiKey <encoded>` string as the `Authorization` header value.
+ **Note:** Alloy uses `headers` for the Elasticsearch endpoint rather than the `authorization` block used in standalone Prometheus. Pass the full `ApiKey <encoded>` string as the `Authorization` header value.
 
 Save and publish the config in Fleet Management — all enrolled Alloy agents will pick up the change on their next poll cycle (typically within 60 seconds). No restarts required.
 
@@ -240,6 +240,8 @@ Ship metrics from a Prometheus stack — self-managed or via Grafana Cloud — i
 
 Add one or more `remote_write` blocks to your existing Prometheus config to ship metrics directly to Elasticsearch. This approach works for self-managed Prometheus with self-managed Grafana or Grafana Cloud.
 
+**Note: Anything that produces Prometheus metrics can now be natively shipped to Elasticsearch.**
+
 ### Architecture: Prometheus + Grafana Cloud + Elasticsearch
 
 Prometheus fans out via `remote_write` to both Grafana Cloud Metrics and Elasticsearch simultaneously.
@@ -249,6 +251,7 @@ flowchart LR
     subgraph hosts["Monitored Hosts"]
         A1["Host / App\n(Node Exporter or app metrics)"]
         A2["Host / App\n(Node Exporter or app metrics)"]
+        A3["Host / App\n(Anything that can be scraped by Prometheus"]
     end
 
     subgraph local["Local / Self-Managed"]
@@ -269,19 +272,23 @@ flowchart LR
 
     A1 -- "scrape /metrics (HTTP)" --> P
     A2 -- "scrape /metrics (HTTP)" --> P
+    A3 -- "scrape /metrics (HTTP)" --> P
     P -- "remote_write\n(HTTPS + API key)" --> ES
     P -- "remote_write\n(HTTPS + basic auth)" --> GCM
 ```
 
-### Architecture: Prometheus + Grafana Self Managed + Elasticsearch
+### Architecture:  Node Exporter / App Metrics etc. + Grafana Self Managed + Elasticsearch
 
 Prometheus scrapes local targets and ships metrics directly to Elasticsearch. A self-managed Grafana instance queries Elasticsearch for dashboards.
+
+
 
 ```mermaid
 flowchart LR
     subgraph hosts["Monitored Hosts"]
         A1["Host / App\n(Node Exporter or app metrics)"]
         A2["Host / App\n(Node Exporter or app metrics)"]
+        A3["Host / App\n(Anything that can be scraped by Prometheus"]
     end
 
     subgraph local["Local / Self-Managed"]
@@ -297,6 +304,7 @@ flowchart LR
 
     A1 -- "scrape /metrics (HTTP)" --> P
     A2 -- "scrape /metrics (HTTP)" --> P
+    A3 -- "scrape /metrics (HTTP)" --> P
     P -- "remote_write\n(HTTPS + API key)" --> ES
     G -- "Elasticsearch\ndata source query" --> ES
 ```
