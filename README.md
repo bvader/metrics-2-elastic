@@ -15,7 +15,7 @@ Teams running Prometheus/Grafana or DataDog often want a single observability ba
 
 From the Elastic Blog:
 
-*Elasticsearch has thus become a leading columnar metrics engine, matching or exceeding the competition (like Prometheus, Mimir, and ClickHouse) in indexing throughput and exceeding it by up to 2.5x in storage efficiency and 30x in query performance. All while maintaining the ability to store logs and other data and fully use the rich querying capabilities of ES|QL (e.g. inline stats, lookup join) — which other PromQL-based systems lack. Elasticsearch can thus serve as a unified storage and query engine for all user data, with no compromises for metrics and observability application*
+*Elasticsearch has thus become a leading columnar metrics engine, matching or exceeding the competition (like Prometheus, Mimir, and ClickHouse) in indexing throughput and exceeding it by up to 2.5x in storage efficiency and 30x in query performance. All while maintaining the ability to store logs and other data and fully use the rich querying capabilities of ES|QL (e.g. inline stats, lookup join) — which other PromQL-based systems lack. Elasticsearch can thus serve as a unified storage and query engine for all user data, with no compromises for metrics and observability applications*
 
 Elastic is now a fully interoperable metrics solution, supporting OTEL and native Prometheus metrics ingest alongside a unified query experience via ES|QL or native PromQL.
 
@@ -28,7 +28,7 @@ Elastic is now a fully interoperable metrics solution, supporting OTEL and nativ
 | [Grafana 1](#grafana-1-grafana-alloy--grafana-cloud--elasticsearch) | ✅ Done | Grafana Alloy + Grafana Cloud + Elasticsearch |
 | [Grafana 2](#grafana-2-prometheus--grafana--elasticsearch) | ✅ Done | Node Exporter / App Metrics etc + Prometheus + Grafana (self-managed or Grafana Cloud) + Elasticsearch |
 | [DataDog 1](#datadog-1-datadog-agent--otel-collector--elasticsearch) | ✅ Done | DataDog Agent + OTEL Collector + Elasticsearch |
-| [Prometheus Full Local Test](#full-local-test-node-exporter--prometheus--elasticsearch) | ✅ Done | Full local setup: Node Exporter + Prometheus + Grafana + Elasticsearch |
+| [Prometheus Full Local Test](#full-local-test-node-exporter--prometheus--grafana--elasticsearch) | ✅ Done | Full local setup: Node Exporter + Prometheus + Grafana + Elasticsearch |
 
 ---
 
@@ -279,11 +279,9 @@ flowchart LR
     P -- "remote_write\n(HTTPS + basic auth)" --> GCM
 ```
 
-### Architecture:  Node Exporter / App Metrics etc. + Grafana Self Managed + Elasticsearch
+### Architecture: Node Exporter / App Metrics etc. + Grafana Self Managed + Elasticsearch
 
 Prometheus scrapes local targets and ships metrics directly to Elasticsearch. A self-managed Grafana instance queries Elasticsearch for dashboards.
-
-
 
 ```mermaid
 flowchart LR
@@ -712,12 +710,12 @@ Prometheus UI: `http://localhost:9090`
 Test with a quick query
 
 ```promql
-    avg(node_load1)
+avg(node_load1)
 ```
 ![Prometheus Metrics in Prometheus](grafana/prometheus-grafana/assets/prom-self-managed-graph.png)
 
 #### 4. View in Grafana (Optional)
-If you want to see what it looks like in Grafana that is easy too! 
+If you want to see what it looks like in Grafana that is easy too!
 
 Simply create a `docker-compose.yml`
 
