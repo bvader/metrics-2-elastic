@@ -25,10 +25,10 @@ Elastic is now a fully interoperable metrics solution, supporting OTEL and nativ
 
 | ID | Status | Use Case |
 |----|--------|----------|
-| [Grafana 1](#grafana-1-grafana-alloy--grafana-cloud--elasticsearch) | ✅ Done | Grafana Alloy → Grafana Cloud → Elasticsearch |
-| [Grafana 2](#grafana-2-prometheus--grafana--elasticsearch) | ✅ Done | Prometheus + Grafana (self-managed or Grafana Cloud) → Elasticsearch |
-| [DataDog 1](#datadog-1-datadog-agent--otel-collector--elasticsearch) | ✅ Done | DataDog Agent → OTEL Collector → Elasticsearch |
-| [Prometheus Full Local Test](#full-local-test-node-exporter--prometheus--elasticsearch) | ✅ Done | Full local setup: Node Exporter + Prometheus + Grafana → Elasticsearch |
+| [Grafana 1](#grafana-1-grafana-alloy--grafana-cloud--elasticsearch) | ✅ Done | Grafana Alloy + Grafana Cloud + Elasticsearch |
+| [Grafana 2](#grafana-2-prometheus--grafana--elasticsearch) | ✅ Done | Prometheus + Grafana (self-managed or Grafana Cloud) + Elasticsearch |
+| [DataDog 1](#datadog-1-datadog-agent--otel-collector--elasticsearch) | ✅ Done | DataDog Agent + OTEL Collector + Elasticsearch |
+| [Prometheus Full Local Test](#full-local-test-node-exporter--prometheus--elasticsearch) | ✅ Done | Full local setup: Node Exporter + Prometheus + Grafana + Elasticsearch |
 
 ---
 
@@ -40,7 +40,7 @@ Elastic is now a fully interoperable metrics solution, supporting OTEL and nativ
 
 ### Create an Elasticsearch API Key
 
-**Option A — Kibana UI:** Kibana → Stack Management → API Keys → Create API key → select JSON and paste the privileges below.
+**Option A — Kibana UI:** Kibana + Stack Management + API Keys + Create API key + select JSON and paste the privileges below.
 
 **Option B — Dev Tools console:**
 
@@ -81,7 +81,7 @@ The response contains an `encoded` field — that base64 value is used as the AP
 
 ---
 
-## Grafana 1: Grafana Alloy → Grafana Cloud → Elasticsearch
+## Grafana 1: Grafana Alloy + Grafana Cloud + Elasticsearch
 
 **Config:** [`grafana/alloy-grafana-cloud/alloy.config`](grafana/alloy-grafana-cloud/alloy.config)
 
@@ -137,7 +137,7 @@ flowchart LR
 
 #### 1. Open the Fleet Management Config Editor
 
-In Grafana Cloud, navigate to **Fleet Management → Remote Configuration → Editor**.
+In Grafana Cloud, navigate to **Fleet Management + Remote Configuration + Editor**.
 
 ![Grafana Cloud Console](grafana/alloy-grafana-cloud/assets/grafana-cloud-alloy-overview.png)
 
@@ -213,26 +213,26 @@ Save and publish the config in Fleet Management — all enrolled Alloy agents wi
 
 #### 3. Verify Data is Flowing
 
-Confirm data in Elasticsearch — Kibana → Discover → ES|QL:
+Confirm data in Elasticsearch — Kibana + Discover + ES|QL:
 ```esql
 TS metrics-generic.prometheus-default
 ```
 ![Alloy / Prometheus metrics in Elasticsearch](grafana/alloy-grafana-cloud/assets/elastic-grafana-alloy-prom.png)
 
-Confirm data in Grafana Cloud — your stack → Explore → Metrics:
+Confirm data in Grafana Cloud — your stack + Explore + Metrics:
 
 ![Prometheus metrics in Grafana Cloud](grafana/alloy-grafana-cloud/assets/grafana-alloy-prom.png)
 
 
 #### 4. Troubleshooting
 
-If the metrics are not flowing, go to Connections → Fleet Management → click the host you configured → Logs. Review the messages, fix the issue, and try again.
+If the metrics are not flowing, go to Connections + Fleet Management + click the host you configured + Logs. Review the messages, fix the issue, and try again.
 
 ![Troubleshoting Prometheus metrics in Grafana Cloud](grafana/alloy-grafana-cloud/assets/grafana-alloy-troubleshooting.png)
 
 ---
 
-## Grafana 2: Prometheus → Grafana + Elasticsearch
+## Grafana 2: Prometheus + Grafana + Elasticsearch
 
 **Config:** [`grafana/prometheus-grafana/prometheus.yml`](grafana/prometheus-grafana/prometheus.yml)
 
@@ -240,7 +240,7 @@ Ship metrics from a Prometheus stack — self-managed or via Grafana Cloud — i
 
 Add one or more `remote_write` blocks to your existing Prometheus config to ship metrics directly to Elasticsearch. This approach works for self-managed Prometheus with self-managed Grafana or Grafana Cloud.
 
-### Architecture: Prometheus → Grafana Cloud + Elasticsearch
+### Architecture: Prometheus + Grafana Cloud + Elasticsearch
 
 Prometheus fans out via `remote_write` to both Grafana Cloud Metrics and Elasticsearch simultaneously.
 
@@ -273,7 +273,7 @@ flowchart LR
     P -- "remote_write\n(HTTPS + basic auth)" --> GCM
 ```
 
-### Architecture: Prometheus → Grafana Self Managed + Elasticsearch
+### Architecture: Prometheus + Grafana Self Managed + Elasticsearch
 
 Prometheus scrapes local targets and ships metrics directly to Elasticsearch. A self-managed Grafana instance queries Elasticsearch for dashboards.
 
@@ -323,7 +323,7 @@ flowchart LR
 #### 1. (Grafana Cloud only) Get Your Remote Write Credentials
 
 In the Grafana Cloud Portal:
-1. Navigate to your stack → **Prometheus** → **Remote Write endpoint**
+1. Navigate to your stack + **Prometheus** + **Remote Write endpoint**
 2. Copy the endpoint URL and your **Instance ID**
 3. Create an Access Policy token with `metrics:write` scope — this is your password
 
@@ -368,7 +368,7 @@ Check Prometheus self-metrics for write activity:
 curl -s http://localhost:9090/metrics | grep prometheus_remote_storage_samples_in_total
 ```
 
-Confirm data in Elasticsearch — Kibana → Discover → ES|QL:
+Confirm data in Elasticsearch — Kibana + Discover + ES|QL:
 
 ```esql
 TS metrics-generic.prometheus-default
@@ -378,13 +378,13 @@ TS metrics-generic.prometheus-default
 
 ---
 
-## DataDog 1: DataDog Agent → OTEL Collector → Elasticsearch
+## DataDog 1: DataDog Agent + OTEL Collector + Elasticsearch
 
 **Config:** [`datadog/agent-otel-elasticsearch/`](datadog/agent-otel-elasticsearch/)
 
 The DataDog Agent already collects host metrics, traces, and logs and ships them to the DataDog platform. This use case adds a second destination — Elasticsearch — without replacing DataDog. The DataDog Agent emits metrics via OTLP to a local OpenTelemetry Collector, which forwards them to Elasticsearch.
 
-### Architecture: DataDog Agent → DataDog (Baseline)
+### Architecture: DataDog Agent + DataDog (Baseline)
 
 Before adding Elasticsearch, this is the existing flow: the DataDog Agent running on each host scrapes system and application metrics and ships them to the DataDog platform via the DataDog intake API.
 
@@ -549,7 +549,7 @@ Copy [`./datadog/agent-otel-elasticsearch/otel-collector-config.yaml`](./datadog
 
 | Placeholder | Where to find it |
 |-------------|-----------------|
-| `<ELASTIC_CLOUD_INGEST_ENDPOINT>` | Elastic Cloud console → Deployment → Copy the OTLP endpoint (gRPC, typically `https://<deployment>.ingest.<region>.aws.elastic-cloud.com`) |
+| `<ELASTIC_CLOUD_INGEST_ENDPOINT>` | Elastic Cloud console + Deployment + Copy the OTLP endpoint (gRPC, typically `https://<deployment>.ingest.<region>.aws.elastic-cloud.com`) |
 | `<YOUR_BASE64_API_KEY>` | The `encoded` field from the API key creation response (see [Common Prerequisites](#common-prerequisites)) |
 
 Start the Collector:
@@ -601,7 +601,7 @@ journalctl -u otelcol-contrib -f
 
 ![DataDog Metrics Explorer](datadog/assets/datadog-ui-metrics.png)
 
-**Check Elasticsearch** — Kibana → Discover → ES|QL:
+**Check Elasticsearch** — Kibana + Discover + ES|QL:
 
 ```esql
 TS metrics-datadogreceiver.otel-default
@@ -613,7 +613,7 @@ And you should see something like this.
 
 ---
 
-## Full Local Test: Node Exporter + Prometheus → Elasticsearch
+## Full Local Test: Node Exporter + Prometheus + Elasticsearch
 
 End-to-end walkthrough to get metrics flowing from your local machine to Elasticsearch in under 10 minutes.
 
@@ -736,14 +736,14 @@ docker compose up -d
 
 Navigate to `http://localhost:3000/`
 
-Drilldown → Metrics 
+Drilldown + Metrics 
 
 ![Prometheus metrics in Grafana](grafana/prometheus-grafana/assets/grafana-self-managed-prom.png)
 
 
 #### Step 5 — Verify Data is Flowing
 
-Confirm data in Elasticsearch — Kibana → Discover → ES|QL:
+Confirm data in Elasticsearch — Kibana + Discover + ES|QL:
 ```esql
 TS metrics-generic.prometheus-default
 ```
