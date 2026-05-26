@@ -232,7 +232,7 @@ If the metrics are not flowing, go to Connections → Fleet Management → click
 
 ---
 
-## Grafana 2: Prometheus + Grafana → Elasticsearch
+## Grafana 2: Prometheus → Grafana + Elasticsearch
 
 **Config:** [`grafana/prometheus-grafana/prometheus.yml`](grafana/prometheus-grafana/prometheus.yml)
 
@@ -273,7 +273,7 @@ flowchart LR
     P -- "remote_write\n(HTTPS + basic auth)" --> GCM
 ```
 
-### Architecture: Prometheus → Elasticsearch (Self-Managed)
+### Architecture: Prometheus → Grafana Self Managed + Elasticsearch
 
 Prometheus scrapes local targets and ships metrics directly to Elasticsearch. A self-managed Grafana instance queries Elasticsearch for dashboards.
 
