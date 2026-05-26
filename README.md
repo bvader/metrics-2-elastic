@@ -6,7 +6,7 @@ Sample code, configurations, and architecture diagrams for shipping metrics from
 
 ## Why?
 
-Teams running Prometheus/Grafana or DataDog often want a single observability backend — or are evaluating Elasticsearch as their metrics store. This repo provides ready-to-use patterns for each common ingest paths. These patterns then allow side-by-side comparisons on the metrics enginess and experience. 
+Teams running Prometheus/Grafana or DataDog often want a single observability backend — or are evaluating Elasticsearch as their metrics store. This repo provides ready-to-use patterns for each common ingest path. These patterns allow side-by-side comparisons on the metrics engines and experience.
 
 Note: These patterns are not necessarily production grade / scaled configuration but should provide a quick path for test and evaluation.
 
@@ -240,34 +240,6 @@ Ship metrics from a Prometheus stack — self-managed or via Grafana Cloud — i
 
 Add one or more `remote_write` blocks to your existing Prometheus config to ship metrics directly to Elasticsearch. This approach works for self-managed Prometheus with self-managed Grafana or Grafana Cloud.
 
-### Architecture: Self-Managed Grafana
-
-Prometheus scrapes local targets and ships metrics directly to Elasticsearch. A self-managed Grafana instance queries Elasticsearch for dashboards.
-
-```mermaid
-flowchart LR
-    subgraph hosts["Monitored Hosts"]
-        A1["Host / App\n(Node Exporter or app metrics)"]
-        A2["Host / App\n(Node Exporter or app metrics)"]
-    end
-
-    subgraph local["Local / Self-Managed"]
-        direction TB
-        P["Prometheus\n(scrape + remote_write)"]
-        G["Grafana OSS\n(dashboards)"]
-        P -- "PromQL queries" --> G
-    end
-
-    subgraph elastic["Elasticsearch"]
-        ES["Elasticsearch\n(ECH or Serverless)\nmetrics-* data stream"]
-    end
-
-    A1 -- "scrape /metrics (HTTP)" --> P
-    A2 -- "scrape /metrics (HTTP)" --> P
-    P -- "remote_write\n(HTTPS + API key)" --> ES
-    G -- "Elasticsearch\ndata source query" --> ES
-```
-
 ### Architecture: Prometheus → Grafana Cloud + Elasticsearch
 
 Prometheus fans out via `remote_write` to both Grafana Cloud Metrics and Elasticsearch simultaneously.
@@ -299,6 +271,34 @@ flowchart LR
     A2 -- "scrape /metrics (HTTP)" --> P
     P -- "remote_write\n(HTTPS + API key)" --> ES
     P -- "remote_write\n(HTTPS + basic auth)" --> GCM
+```
+
+### Architecture: Prometheus → Elasticsearch (Self-Managed)
+
+Prometheus scrapes local targets and ships metrics directly to Elasticsearch. A self-managed Grafana instance queries Elasticsearch for dashboards.
+
+```mermaid
+flowchart LR
+    subgraph hosts["Monitored Hosts"]
+        A1["Host / App\n(Node Exporter or app metrics)"]
+        A2["Host / App\n(Node Exporter or app metrics)"]
+    end
+
+    subgraph local["Local / Self-Managed"]
+        direction TB
+        P["Prometheus\n(scrape + remote_write)"]
+        G["Grafana OSS\n(dashboards)"]
+        P -- "PromQL queries" --> G
+    end
+
+    subgraph elastic["Elasticsearch"]
+        ES["Elasticsearch\n(ECH or Serverless)\nmetrics-* data stream"]
+    end
+
+    A1 -- "scrape /metrics (HTTP)" --> P
+    A2 -- "scrape /metrics (HTTP)" --> P
+    P -- "remote_write\n(HTTPS + API key)" --> ES
+    G -- "Elasticsearch\ndata source query" --> ES
 ```
 
 ### How It Works
@@ -517,8 +517,6 @@ flowchart LR
 
     OC -- "OTLP\n(HTTPS + ES API Key)" --> ES
 ```
-
-
 
 ---
 
@@ -743,7 +741,7 @@ Drilldown → Metrics
 ![Prometheus metrics in Grafana](grafana/prometheus-grafana/assets/grafana-self-managed-prom.png)
 
 
-#### Step 5. Verify Data is Flowing
+#### Step 5 — Verify Data is Flowing
 
 Confirm data in Elasticsearch — Kibana → Discover → ES|QL:
 ```esql
