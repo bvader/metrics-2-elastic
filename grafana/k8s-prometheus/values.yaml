@@ -1,0 +1,113 @@
+# values.yaml — Prometheus Helm chart (prometheus-community/prometheus)
+# with remote_write to Elasticsearch and Grafana Cloud simultaneously.
+#
+# Install:
+#   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+#   helm repo update
+#   helm install prometheus prometheus-community/prometheus \
+#     --namespace monitoring --create-namespace \
+#     -f values.yaml
+#
+# Replace all <PLACEHOLDER> values before use.
+
+# ---------------------------------------------------------------------------
+# Global scrape settings
+# ---------------------------------------------------------------------------
+server:
+  global:
+    scrape_interval: 15s
+    evaluation_interval: 15s
+    external_labels:
+      cluster: "<YOUR_CLUSTER_NAME>"   # e.g. "prod-us-west-2"
+      env: "production"
+
+  remoteWrite:
+    # -------------------------------------------------------------------------
+    # Remote Write 1 — Elasticsearch (ECH, Serverless, or Self-Managed)
+    # -------------------------------------------------------------------------
+    - url: "https://<YOUR_ES_ENDPOINT>/_prometheus/api/v1/write"
+      # Elastic Cloud Hosted:  https://<cluster-id>.es.<region>.aws.elastic-cloud.com/_prometheus/api/v1/write
+      # Elastic Serverless:    https://<project-id>.es.<region>.aws.elastic.co/_prometheus/api/v1/write
+      # Self-Managed:          https://<hostname>:9200/_prometheus/api/v1/write
+      name: elasticsearch
+      authorization:
+        type: ApiKey
+        credentials: "<YOUR_BASE64_API_KEY>"
+        # The base64-encoded API key from the Elasticsearch API key creation response.
+        # Create one with write access to metrics-*:
+        #   POST /_security/api_key
+        #   { "name": "metrics-writer",
+        #     "role_descriptors": { "metrics_writer": {
+        #       "indices": [{ "names": ["metrics-*"],
+        #         "privileges": ["create_index","create","index","auto_configure"] }] }}}
+        # Use the `encoded` field from the response.
+      queue_config:
+        capacity: 10000
+        max_shards: 50
+        max_samples_per_send: 5000
+        batch_send_deadline: 5s
+
+    # -------------------------------------------------------------------------
+    # Remote Write 2 — Grafana Cloud Metrics (runs alongside ES above)
+    # -------------------------------------------------------------------------
+    - url: "https://<YOUR_GRAFANA_CLOUD_PROM_ENDPOINT>/api/prom/push"
+      # Find your endpoint: Grafana Cloud Portal → your stack → Prometheus → Remote Write endpoint
+      name: grafana-cloud
+      basicAuth:
+        username: "<YOUR_GRAFANA_CLOUD_INSTANCE_ID>"
+        # Numeric instance ID — found in the Grafana Cloud Portal next to the remote write endpoint.
+        password: "<YOUR_GRAFANA_CLOUD_API_TOKEN>"
+        # Generate a token: Grafana Cloud Portal → Access Policies → create with metrics:write scope.
+      queue_config:
+        capacity: 10000
+        max_shards: 50
+        max_samples_per_send: 5000
+        batch_send_deadline: 5s
+
+  # -------------------------------------------------------------------------
+  # Persistence — store TSDB data on a PersistentVolume
+  # -------------------------------------------------------------------------
+  persistentVolume:
+    enabled: true
+    size: 8Gi
+    # storageClass: "" # leave empty to use the cluster default StorageClass
+
+  # -------------------------------------------------------------------------
+  # Resource requests/limits — tune to your cluster capacity
+  # -------------------------------------------------------------------------
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+  # Retention period for local TSDB (remote_write offloads long-term storage)
+  retention: "15d"
+
+# ---------------------------------------------------------------------------
+# kube-state-metrics — exposes K8s object state as Prometheus metrics
+# (Deployment, Pod, Node, PVC, HPA, etc.)
+# ---------------------------------------------------------------------------
+kube-state-metrics:
+  enabled: true
+
+# ---------------------------------------------------------------------------
+# prometheus-node-exporter — exposes host-level OS metrics per node
+# (CPU, memory, disk, network) via a DaemonSet
+# ---------------------------------------------------------------------------
+prometheus-node-exporter:
+  enabled: true
+
+# ---------------------------------------------------------------------------
+# Alertmanager — disable if you manage alerts externally
+# ---------------------------------------------------------------------------
+alertmanager:
+  enabled: false
+
+# ---------------------------------------------------------------------------
+# Pushgateway — enable only if you have batch/ephemeral jobs pushing metrics
+# ---------------------------------------------------------------------------
+prometheus-pushgateway:
+  enabled: false

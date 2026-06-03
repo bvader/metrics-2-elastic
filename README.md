@@ -27,6 +27,7 @@ Elastic is now a fully interoperable metrics solution, supporting OTEL and nativ
 |----|--------|----------|
 | [Grafana 1](#grafana-1-grafana-alloy--grafana-cloud--elasticsearch) | ✅ Done | Grafana Alloy + Grafana Cloud + Elasticsearch |
 | [Grafana 2](#grafana-2-prometheus--grafana--elasticsearch) | ✅ Done | Node Exporter / App Metrics etc + Prometheus + Grafana (self-managed or Grafana Cloud) + Elasticsearch |
+| [Grafana 3](#grafana-3-k8s--prometheus--elasticsearch) | ✅ Done | Kubernetes + Prometheus (Helm) + Elasticsearch |
 | [DataDog 1](#datadog-1-datadog-agent--otel-collector--elasticsearch) | ✅ Done | DataDog Agent + OTEL Collector + Elasticsearch |
 | [Prometheus Full Local Test](#full-local-test-node-exporter--prometheus--grafana--elasticsearch) | ✅ Done | Full local setup: Node Exporter + Prometheus + Grafana + Elasticsearch |
 
@@ -387,6 +388,164 @@ TS metrics-generic.prometheus-default
 
 ---
 
+## Grafana 3: K8s + Prometheus + Elasticsearch
+
+**Config:** [`grafana/k8s-prometheus/values.yaml`](grafana/k8s-prometheus/values.yaml)
+
+Deploy Prometheus into a Kubernetes cluster via the official Helm chart and ship metrics directly to Elasticsearch using `remote_write`. The chart bundles `kube-state-metrics` (K8s object state) and `prometheus-node-exporter` (host OS metrics) as sub-charts, giving you full cluster visibility with a single Helm install.
+
+### Architecture
+
+```mermaid
+flowchart LR
+    subgraph k8s["Kubernetes Cluster"]
+        direction TB
+        NE["prometheus-node-exporter\n(DaemonSet — host OS metrics)"]
+        KSM["kube-state-metrics\n(Deployment — K8s object state)"]
+        KA["Kubelet / cAdvisor\n(container + pod metrics)"]
+        P["Prometheus Server\n(Deployment)"]
+        NE -- "scrape :9100" --> P
+        KSM -- "scrape :8080" --> P
+        KA -- "scrape /metrics/cadvisor" --> P
+    end
+
+    subgraph grafanacloud["Grafana Cloud"]
+        GCM["Grafana Cloud Metrics\n(Mimir)"]
+        GCD["Grafana Cloud\nDashboards"]
+        GCM --> GCD
+    end
+
+    subgraph elastic["Elasticsearch"]
+        ES["Elasticsearch\n(ECH, Serverless, or Self-Managed)\nmetrics-* data stream"]
+        KB["Kibana\n(Discover / Dashboards)"]
+        ES --> KB
+    end
+
+    P -- "remote_write\n(HTTPS + API key)" --> ES
+    P -- "remote_write\n(HTTPS + basic auth)" --> GCM
+```
+
+### How It Works
+
+1. **prometheus-node-exporter** runs as a DaemonSet, exposing CPU, memory, disk, and network metrics from every node on port `9100`.
+2. **kube-state-metrics** runs as a Deployment and translates Kubernetes API object state (Deployments, Pods, Nodes, PVCs, HPAs, etc.) into Prometheus metrics on port `8080`.
+3. **Kubelet / cAdvisor** — Prometheus scrapes each node's kubelet for container-level resource metrics via the `/metrics/cadvisor` endpoint, using the pod's ServiceAccount for authentication.
+4. **Prometheus Server** scrapes all targets on the configured interval and fans out every sample to both Elasticsearch and Grafana Cloud Metrics simultaneously via `remote_write`. Metrics land in the `metrics-generic.prometheus-default` data stream in Elasticsearch and in Grafana Cloud Metrics (Mimir) in parallel — both destinations are independent and either can be omitted.
+
+### Prerequisites
+
+| Requirement | Notes |
+|-------------|-------|
+| Kubernetes 1.25+ | Any conformant distribution (EKS, GKE, AKS, k3s, etc.) |
+| Helm 3.x | [helm.sh/docs/intro/install/](https://helm.sh/docs/intro/install/) |
+| `kubectl` access | `cluster-admin` or equivalent for namespace creation |
+| Elasticsearch 9.4+ or Serverless | Elastic Cloud Hosted, Serverless, or Self-Managed |
+| Elasticsearch API Key | `write` access to `metrics-*` data streams (see [Common Prerequisites](#common-prerequisites)) |
+
+### Setup
+
+#### 1. Add the Prometheus Helm Repository
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+```
+
+#### 2. Configure `values.yaml`
+
+Copy [`grafana/k8s-prometheus/values.yaml`](grafana/k8s-prometheus/values.yaml) and fill in your values. The key section is `server.remoteWrite` — both destinations are active simultaneously:
+
+```yaml
+server:
+  remoteWrite:
+    # --- Elasticsearch (ECH, Serverless, or Self-Managed) ---
+    - url: "https://<YOUR_ES_ENDPOINT>/_prometheus/api/v1/write"
+      # Elastic Cloud Hosted:  https://<cluster-id>.es.<region>.aws.elastic-cloud.com/_prometheus/api/v1/write
+      # Elastic Serverless:    https://<project-id>.es.<region>.aws.elastic.co/_prometheus/api/v1/write
+      # Self-Managed:          https://<hostname>:9200/_prometheus/api/v1/write
+      name: elasticsearch
+      authorization:
+        type: ApiKey
+        credentials: "<YOUR_BASE64_API_KEY>"
+      queue_config:
+        capacity: 10000
+        max_shards: 50
+        max_samples_per_send: 5000
+        batch_send_deadline: 5s
+
+    # --- Grafana Cloud Metrics ---
+    - url: "https://<YOUR_GRAFANA_CLOUD_PROM_ENDPOINT>/api/prom/push"
+      # Find your endpoint: Grafana Cloud Portal → your stack → Prometheus → Remote Write endpoint
+      name: grafana-cloud
+      basicAuth:
+        username: "<YOUR_GRAFANA_CLOUD_INSTANCE_ID>"
+        password: "<YOUR_GRAFANA_CLOUD_API_TOKEN>"
+      queue_config:
+        capacity: 10000
+        max_shards: 50
+        max_samples_per_send: 5000
+        batch_send_deadline: 5s
+```
+
+| Placeholder | Where to find it |
+|-------------|-----------------|
+| `<YOUR_CLUSTER_NAME>` | Any descriptive label — e.g. `prod-us-west-2`. Becomes an `external_label` on every metric. |
+| `<YOUR_ES_ENDPOINT>` | Elastic Cloud console + Deployment + Endpoints → Elasticsearch. Omit the trailing slash. |
+| `<YOUR_BASE64_API_KEY>` | The `encoded` field from the API key creation response (see [Common Prerequisites](#common-prerequisites)). |
+| `<YOUR_GRAFANA_CLOUD_PROM_ENDPOINT>` | Grafana Cloud Portal → your stack → Prometheus → Remote Write endpoint. |
+| `<YOUR_GRAFANA_CLOUD_INSTANCE_ID>` | Numeric instance ID shown next to the remote write endpoint in the Cloud Portal. |
+| `<YOUR_GRAFANA_CLOUD_API_TOKEN>` | Grafana Cloud Portal → Access Policies → create token with `metrics:write` scope. |
+
+#### 3. Install Prometheus
+
+```bash
+helm install prometheus prometheus-community/prometheus \
+  --namespace monitoring --create-namespace \
+  -f values.yaml
+```
+
+Verify the pods are running:
+
+```bash
+kubectl get pods -n monitoring
+```
+
+Expected output (all pods `Running`):
+
+```
+NAME                                             READY   STATUS    RESTARTS
+prometheus-server-<hash>                         2/2     Running   0
+prometheus-kube-state-metrics-<hash>             1/1     Running   0
+prometheus-prometheus-node-exporter-<hash>       1/1     Running   0
+```
+
+#### 4. Verify Data is Flowing
+
+Check Prometheus remote write metrics — port-forward the Prometheus server and query its self-metrics:
+
+```bash
+kubectl port-forward -n monitoring svc/prometheus-server 9090:80
+curl -s http://localhost:9090/metrics | grep prometheus_remote_storage_samples_in_total
+```
+
+A non-zero `prometheus_remote_storage_samples_in_total` counter confirms samples are being written.
+
+Confirm data in Elasticsearch — Kibana + Discover + ES|QL:
+
+```esql
+TS metrics-generic.prometheus-default
+```
+
+#### 5. Upgrade After Changing Values
+
+```bash
+helm upgrade prometheus prometheus-community/prometheus \
+  --namespace monitoring \
+  -f values.yaml
+```
+
+---
+
 ## DataDog 1: DataDog Agent + OTEL Collector + Elasticsearch
 
 **Config:** [`datadog/agent-otel-elasticsearch/`](datadog/agent-otel-elasticsearch/)
@@ -643,7 +802,8 @@ Node Exporter exposes host-level OS metrics (CPU, memory, disk, network) on port
 **macOS**
 ```bash
 # Download (Apple Silicon — change darwin-arm64 to darwin-amd64 for Intel)
-curl -LO https://github.com/prometheus/node_exporter/releases/latest/download/node_exporter-$(curl -s https://api.github.com/repos/prometheus/node_exporter/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)-darwin-arm64.tar.gz
+VER=$(curl -s https://api.github.com/repos/prometheus/node_exporter/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v) && \
+curl -LO https://github.com/prometheus/node_exporter/releases/download/v${VER}/node_exporter-${VER}.darwin-arm64.tar.gz
 tar xzf node_exporter-*.tar.gz
 cd node_exporter-*/
 ./node_exporter
@@ -651,7 +811,8 @@ cd node_exporter-*/
 
 **Linux**
 ```bash
-curl -LO https://github.com/prometheus/node_exporter/releases/latest/download/node_exporter-$(curl -s https://api.github.com/repos/prometheus/node_exporter/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)-linux-amd64.tar.gz
+VER=$(curl -s https://api.github.com/repos/prometheus/node_exporter/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v) && \
+curl -LO https://github.com/prometheus/node_exporter/releases/download/v${VER}/node_exporter-${VER}.linux-amd64.tar.gz
 tar xzf node_exporter-*.tar.gz
 cd node_exporter-*/
 ./node_exporter
@@ -663,14 +824,16 @@ Verify: `curl -s http://localhost:9100/metrics | head -20`
 
 **macOS**
 ```bash
-curl -LO https://github.com/prometheus/prometheus/releases/latest/download/prometheus-$(curl -s https://api.github.com/repos/prometheus/prometheus/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)-darwin-arm64.tar.gz
+VER=$(curl -s https://api.github.com/repos/prometheus/prometheus/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v) && \
+curl -LO https://github.com/prometheus/prometheus/releases/download/v${VER}/prometheus-${VER}.darwin-arm64.tar.gz
 tar xzf prometheus-*.tar.gz
 cd prometheus-*/
 ```
 
 **Linux**
 ```bash
-curl -LO https://github.com/prometheus/prometheus/releases/latest/download/prometheus-$(curl -s https://api.github.com/repos/prometheus/prometheus/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)-linux-amd64.tar.gz
+VER=$(curl -s https://api.github.com/repos/prometheus/prometheus/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v) && \
+curl -LO https://github.com/prometheus/prometheus/releases/download/v${VER}/prometheus-${VER}.linux-amd64.tar.gz
 tar xzf prometheus-*.tar.gz
 cd prometheus-*/
 ```

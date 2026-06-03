@@ -16,6 +16,7 @@ Provide working sample code, configuration, and architecture diagrams enabling u
 |----|--------|----------|--------|-------------|
 | Grafana 1 | ✅ Done | Grafana Alloy → Grafana Cloud → Elasticsearch | Alloy collector → Grafana Cloud Fleet Management → Elasticsearch | Elasticsearch (ECH or Serverless) + Grafana Cloud Metrics in parallel |
 | Grafana 2 | ✅ Done | Prometheus + Grafana (self-managed or Grafana Cloud) → Elasticsearch | Prometheus `remote_write` | Elasticsearch (ECH or Serverless); optional Grafana Cloud Metrics in parallel |
+| Grafana 3 | ✅ Done | K8s Monitoring: K8s + Prometheus (Helm) → Elasticsearch | Prometheus `remote_write` in Helm `values.yaml` | Elasticsearch (ECH, Serverless, or Self-Managed) |
 
 ### DataDog
 
