@@ -97,12 +97,10 @@ Grafana Alloy runs as a lightweight agent on each host, scraping local metrics e
 ```mermaid
 flowchart LR
     subgraph hosts["Monitored Hosts"]
-        direction TB
         AY1["Grafana Alloy\n(scrape + remote_write)"]
     end
 
     subgraph grafanacloud["Grafana Cloud"]
-        direction TB
         FM["Fleet Management\n(config push)"]
         GCM["Grafana Cloud Metrics\n(Mimir)"]
         GCD["Grafana Cloud\nDashboards"]
